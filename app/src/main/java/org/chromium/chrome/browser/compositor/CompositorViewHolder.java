@@ -326,7 +326,7 @@ public class CompositorViewHolder extends FrameLayout
 
         // Set the background to white while we wait for the first swap of buffers. This gets
         // corrected inside the view.
-        mCompositorView.setBackgroundColor(Color.WHITE);
+        mCompositorView.setBackgroundColor(Color.CYAN);
     }
 
     @Override
@@ -437,7 +437,7 @@ public class CompositorViewHolder extends FrameLayout
     @Override
     public void onSurfaceResized(int width, int height) {
         ContentViewCore content = getActiveContent();
-        if (content != null) adjustPhysicalBackingSize(content, width, height);
+        if (content != null) adjustPhysicalBackingSize(content, width, height+50);
     }
 
     /**

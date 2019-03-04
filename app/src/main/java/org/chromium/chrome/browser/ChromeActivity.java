@@ -26,6 +26,7 @@ import android.os.SystemClock;
 import android.support.annotation.CallSuper;
 import android.support.v7.app.AlertDialog;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -137,6 +138,7 @@ import org.chromium.chrome.browser.util.AccessibilityUtil;
 import org.chromium.chrome.browser.util.ChromeFileProvider;
 import org.chromium.chrome.browser.util.ColorUtils;
 import org.chromium.chrome.browser.util.FeatureUtilities;
+import org.chromium.chrome.browser.util.ILog;
 import org.chromium.chrome.browser.vr_shell.VrShellDelegate;
 import org.chromium.chrome.browser.webapps.AddToHomescreenManager;
 import org.chromium.chrome.browser.widget.ControlContainer;
@@ -459,6 +461,7 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
                 // Get a handle to the bottom sheet if using the bottom control container.
                 if (controlContainerLayoutId == R.layout.bottom_control_container) {
                     View coordinator = findViewById(R.id.coordinator);
+                    coordinator.setVisibility(View.INVISIBLE);
                     mBottomSheet = (BottomSheet) findViewById(R.id.bottom_sheet);
                     mBottomSheet.init(coordinator, controlContainer.getView(), this);
                 }
@@ -499,6 +502,7 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
      */
     protected void initializeToolbar() {
         final View controlContainer = findViewById(R.id.control_container);
+        controlContainer.setVisibility(View.GONE);
         assert controlContainer != null;
         ToolbarControlContainer toolbarContainer = (ToolbarControlContainer) controlContainer;
         mAppMenuPropertiesDelegate = createAppMenuPropertiesDelegate();
@@ -513,21 +517,29 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
         mToolbarManager = new ToolbarManager(this, toolbarContainer, mAppMenuHandler,
                 mAppMenuPropertiesDelegate, getCompositorViewHolder().getInvalidator(),
                 urlFocusChangedCallback);
+        //工具栏
+        mToolbarManager.getToolbarLayout().setVisibility(View.GONE);
+        //
+        Log.d(TAG, "initializeToolbar: =======================>");
         mAppMenuHandler.addObserver(new AppMenuObserver() {
             @Override
             public void onMenuVisibilityChanged(boolean isVisible) {
                 if (isVisible && !isInOverviewMode()) {
+                    Log.d(TAG, "onMenuVisibilityChanged: ============0");
                     // The app menu badge should be removed the first time the menu is opened.
                     if (mToolbarManager.getToolbar().isShowingAppMenuUpdateBadge()) {
+                        Log.d(TAG, "onMenuVisibilityChanged: ============1");
                         mToolbarManager.getToolbar().removeAppMenuUpdateBadge(true);
                         mCompositorViewHolder.requestRender();
                     }
                 }
                 if (!isVisible) {
+                    Log.d(TAG, "onMenuVisibilityChanged: ===================2");
                     mAppMenuPropertiesDelegate.onMenuDismissed();
                     MenuItem updateMenuItem = mAppMenuHandler.getAppMenu().getMenu().findItem(
                             R.id.update_menu_id);
                     if (updateMenuItem != null && updateMenuItem.isVisible()) {
+                        Log.d(TAG, "onMenuVisibilityChanged: =======================3>");
                         UpdateMenuItemHelper.getInstance().onMenuDismissed();
                     }
                 }
@@ -556,15 +568,15 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
         Pair<? extends TabCreator, ? extends TabCreator> tabCreators = createTabCreators();
         mRegularTabCreator = tabCreators.first;
         mIncognitoTabCreator = tabCreators.second;
-
         OfflinePageUtils.observeTabModelSelector(this, mTabModelSelector);
         NewTabPageUma.monitorNTPCreation(mTabModelSelector);
 
         if (mTabModelSelectorTabObserver != null) mTabModelSelectorTabObserver.destroy();
-
+        Log.d(TAG, "initializeTabModels: ========================-1");
         mTabModelSelectorTabObserver = new TabModelSelectorTabObserver(mTabModelSelector) {
             @Override
             public void didFirstVisuallyNonEmptyPaint(Tab tab) {
+                Log.d(TAG, "didFirstVisuallyNonEmptyPaint: ==========0");
                 if (DataUseTabUIManager.checkAndResetDataUseTrackingStarted(tab)
                         && DataUseTabUIManager.shouldShowDataUseStartedUI()) {
                     mDataUseSnackbarController.showDataUseTrackingStartedBar();
@@ -577,6 +589,7 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
 
                 // Only alert about data savings once the first paint has happened. It doesn't make
                 // sense to show a snackbar about savings when nothing has been displayed yet.
+                Log.d(TAG, "didFirstVisuallyNonEmptyPaint: ========================1>"+tab.getUrl());
                 if (DataReductionProxySettings.getInstance().isSnackbarPromoAllowed(tab.getUrl())) {
                     if (mDataReductionPromoSnackbarController == null) {
                         mDataReductionPromoSnackbarController =
@@ -591,21 +604,25 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
 
             @Override
             public void onShown(Tab tab) {
+                Log.d(TAG, "onShown: ==================");
                 setStatusBarColor(tab, tab.getThemeColor());
             }
 
             @Override
             public void onHidden(Tab tab) {
+                Log.d(TAG, "onHidden: =================");
                 mDataUseSnackbarController.dismissDataUseBar();
             }
 
             @Override
             public void onDestroyed(Tab tab) {
+                Log.d(TAG, "onDestroyed: =====================");
                 mDataUseSnackbarController.dismissDataUseBar();
             }
 
             @Override
             public void onLoadStopped(Tab tab, boolean toDifferentDocument) {
+                Log.d(TAG, "onLoadStopped: ==============");
                 postDeferredStartupIfNeeded();
             }
 
@@ -859,10 +876,16 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
     public void onResumeWithNative() {
         super.onResumeWithNative();
         markSessionResume();
-        RecordUserAction.record("MobileComeToForeground");
-
+        RecordUserAction.record("MobileMenuRequestDesktopSite");
+        ILog.d("=============");
         if (getActivityTab() != null) {
+            ILog.d("=========getActivityTab====1"+getActivityTab().getUseDesktopUserAgent());
+            //设置桌面版本
+            getActivityTab().setUseDesktopUserAgent(true,true);
+            RecordUserAction.record("MobileMenuRequestDesktopSite");
             LaunchMetrics.commitLaunchMetrics(getActivityTab().getWebContents());
+
+
         }
         ContentViewCore cvc = getContentViewCore();
         if (cvc != null) cvc.onResume();
@@ -950,11 +973,13 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
             @Override
             public void run() {
                 if (isActivityDestroyed()) return;
+                ILog.d("=========getActivityTab====2");
                 BeamController.registerForBeam(ChromeActivity.this, new BeamProvider() {
                     @Override
                     public String getTabUrlForBeam() {
                         if (isOverlayVisible()) return null;
                         if (getActivityTab() == null) return null;
+                        ILog.d("=========getActivityTab====3");
                         return getActivityTab().getUrl();
                     }
                 });
@@ -1939,7 +1964,9 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
             }
         } else if (id == R.id.request_desktop_site_id) {
             final boolean reloadOnChange = !currentTab.isNativePage();
+            ILog.d("===============reloadOnChange====>"+reloadOnChange);
             final boolean usingDesktopUserAgent = currentTab.getUseDesktopUserAgent();
+            ILog.d("=========usingDesktopUserAgent===>"+usingDesktopUserAgent);
             currentTab.setUseDesktopUserAgent(!usingDesktopUserAgent, reloadOnChange);
             RecordUserAction.record("MobileMenuRequestDesktopSite");
         } else if (id == R.id.reader_mode_prefs_id) {

@@ -35,7 +35,7 @@ public class FirstRunStatus {
      */
     public static boolean getFirstRunFlowComplete() {
         return ContextUtils.getAppSharedPreferences()
-                .getBoolean(FIRST_RUN_FLOW_COMPLETE, false);
+                .getBoolean(FIRST_RUN_FLOW_COMPLETE, true);
     }
 
     /**

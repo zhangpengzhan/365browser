@@ -42,11 +42,13 @@ import org.chromium.chrome.browser.instantapps.InstantAppsHandler;
 import org.chromium.chrome.browser.metrics.MediaNotificationUma;
 import org.chromium.chrome.browser.multiwindow.MultiWindowUtils;
 import org.chromium.chrome.browser.notifications.NotificationPlatformBridge;
+import org.chromium.chrome.browser.ntp.LogoDelegateImpl;
 import org.chromium.chrome.browser.partnercustomizations.PartnerBrowserCustomizations;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tabmodel.DocumentModeAssassin;
 import org.chromium.chrome.browser.upgrade.UpgradeActivity;
 import org.chromium.chrome.browser.util.FeatureUtilities;
+import org.chromium.chrome.browser.util.ILog;
 import org.chromium.chrome.browser.util.IntentUtils;
 import org.chromium.chrome.browser.util.UrlUtilities;
 import org.chromium.chrome.browser.webapps.ActivityAssigner;
@@ -157,8 +159,10 @@ public class ChromeLauncherActivity extends Activity
 
         // Check if a web search Intent is being handled.
         String url = IntentHandler.getUrlFromIntent(intent);
+        android.util.Log.d(TAG, "doOnCreate: =========================>"+url);
         if (url == null && tabId == Tab.INVALID_TAB_ID
                 && !incognito && mIntentHandler.handleWebSearchIntent(intent)) {
+            ILog.d("============finish({{");
             finish();
             return;
         }
@@ -168,56 +172,64 @@ public class ChromeLauncherActivity extends Activity
         // TabManager.  If that ever lands, code to bring back any Tab could be consolidated
         // here instead of being spread between ChromeTabbedActivity and ChromeLauncherActivity.
         // https://crbug.com/443772, https://crbug.com/522918
+        android.util.Log.d(TAG, "doOnCreate: ==========1");
         if (WebappLauncherActivity.bringWebappToFront(tabId)) {
+            android.util.Log.d(TAG, "doOnCreate: ============2");
             ApiCompatibilityUtils.finishAndRemoveTask(this);
             return;
         }
-
+        android.util.Log.d(TAG, "doOnCreate: ==================3");
         // The notification settings cog on the flipped side of Notifications and in the Android
         // Settings "App Notifications" view will open us with a specific category.
         if (intent.hasCategory(Notification.INTENT_CATEGORY_NOTIFICATION_PREFERENCES)) {
             NotificationPlatformBridge.launchNotificationPreferences(this, getIntent());
+            android.util.Log.d(TAG, "doOnCreate: ===================4");
             finish();
             return;
         }
-
+        android.util.Log.d(TAG, "doOnCreate: ===================5");
         // Check if we should launch an Instant App to handle the intent.
         if (InstantAppsHandler.getInstance().handleIncomingIntent(
                 this, intent, mIsCustomTabIntent && !mIsHerbIntent, false)) {
+            android.util.Log.d(TAG, "doOnCreate: ===================6");
             finish();
             return;
         }
-
+        android.util.Log.d(TAG, "doOnCreate: ===================7");
         // Check if we should push the user through First Run.
         if (FirstRunFlowSequencer.launch(this, getIntent(), false)) {
+            android.util.Log.d(TAG, "doOnCreate: ===================8");
             finish();
             return;
         }
-
+        android.util.Log.d(TAG, "doOnCreate: ===================9");
         // Check if we should launch the ChromeTabbedActivity.
         if (!mIsCustomTabIntent && !FeatureUtilities.isDocumentMode(this)) {
+            android.util.Log.d(TAG, "doOnCreate: ===================10");
             launchTabbedMode(false);
             finish();
             return;
         }
-
+        android.util.Log.d(TAG, "doOnCreate: ===================11");
         // Check if we should launch a Custom Tab.
         if (mIsCustomTabIntent) {
+            android.util.Log.d(TAG, "doOnCreate: ===================12");
             launchCustomTabActivity();
+
             finish();
             return;
         }
-
+        android.util.Log.d(TAG, "doOnCreate: ===================13");
         // Force a user to migrate to document mode, if necessary.
         if (DocumentModeAssassin.getInstance().isMigrationNecessary()) {
-            Log.d(TAG, "Diverting to UpgradeActivity via ChromeLauncherActivity.");
+            Log.d(TAG, "=====Diverting to UpgradeActivity via ChromeLauncherActivity.");
             UpgradeActivity.launchInstance(this, intent);
             ApiCompatibilityUtils.finishAndRemoveTask(this);
             return;
         }
 
         // All possible bounces to other activities should have already been enumerated above.
-        Log.e(TAG, "User wasn't sent to another Activity.");
+        Log.e(TAG, "==========User wasn't sent to another Activity.");
         assert false;
         ApiCompatibilityUtils.finishAndRemoveTask(this);
     }

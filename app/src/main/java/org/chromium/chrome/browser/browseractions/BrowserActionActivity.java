@@ -53,6 +53,7 @@ public class BrowserActionActivity extends AsyncInitializationActivity {
             return false;
         }
         mUri = Uri.parse(IntentHandler.getUrlFromIntent(intent));
+        android.util.Log.d(TAG, "isStartedUpCorrectly: ==========================mUri=>"+mUri.getPath());
         mType = IntentUtils.safeGetIntExtra(
                 intent, BrowserActionsIntent.EXTRA_TYPE, BrowserActionsIntent.URL_TYPE_NONE);
         mCreatorPackageName = BrowserActionsIntent.getCreatorPackageName(intent);

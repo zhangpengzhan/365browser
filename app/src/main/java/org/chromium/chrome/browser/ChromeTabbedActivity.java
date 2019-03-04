@@ -114,6 +114,7 @@ import org.chromium.chrome.browser.tabmodel.TabModelUtils;
 import org.chromium.chrome.browser.tabmodel.TabWindowManager;
 import org.chromium.chrome.browser.toolbar.ToolbarControlContainer;
 import org.chromium.chrome.browser.util.FeatureUtilities;
+import org.chromium.chrome.browser.util.ILog;
 import org.chromium.chrome.browser.util.IntentUtils;
 import org.chromium.chrome.browser.vr_shell.VrShellDelegate;
 import org.chromium.chrome.browser.widget.bottomsheet.BottomSheet;
@@ -326,6 +327,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
         @Override
         public Tab createNewTab(
                 LoadUrlParams loadUrlParams, TabLaunchType type, Tab parent, Intent intent) {
+            ILog.d("========createNewTab===>"+loadUrlParams.getUrl());
             if (openNtpBottomSheet(loadUrlParams.getUrl())) return null;
             return super.createNewTab(loadUrlParams, type, parent, intent);
         }
@@ -338,6 +340,9 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
          *         Tab associated with it.
          */
         private boolean openNtpBottomSheet(String url) {
+            //设置桌面版本
+
+            ILog.d("======openNtpBottomSheet===="+url);
             if (getBottomSheet() != null && NewTabPage.isNTPUrl(url)) {
                 if (!mUIInitialized) {
                     assert mDelayedInitialTabBehaviorDuringUiInit == null;
@@ -369,6 +374,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
      * Constructs a ChromeTabbedActivity.
      */
     public ChromeTabbedActivity() {
+        ILog.d("======ChromeTabbedActivity====>");
         mActivityStopMetrics = new ActivityStopMetrics();
         mMainIntentMetrics = new MainIntentBehaviorMetrics(this);
         mAppIndexingUtil = new AppIndexingUtil();

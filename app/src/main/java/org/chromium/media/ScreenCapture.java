@@ -4,6 +4,7 @@
 
 package org.chromium.media;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
@@ -40,6 +41,7 @@ import java.nio.ByteBuffer;
  * API 21 (L Release). Capture takes place in the current Looper, while pixel
  * download takes place in another thread used by ImageReader.
  **/
+@SuppressLint("ValidFragment")
 @JNINamespace("media")
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class ScreenCapture extends Fragment {
@@ -72,6 +74,7 @@ public class ScreenCapture extends Fragment {
     private int mFormat;
     private int mResultCode;
 
+    @SuppressLint("ValidFragment")
     ScreenCapture(long nativeScreenCaptureMachineAndroid) {
         mNativeScreenCaptureMachineAndroid = nativeScreenCaptureMachineAndroid;
     }
